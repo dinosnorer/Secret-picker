@@ -1,2 +1,77 @@
 # Secret-picker
-Ssssd
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Secret Button Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 80px;
+        }
+        input {
+            font-size: 18px;
+            width: 60px;
+            text-align: center;
+        }
+        button {
+            font-size: 24px;
+            padding: 20px 40px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        #result {
+            margin-top: 50px;
+            font-size: 36px;
+            font-weight: bold;
+        }
+        #note {
+            font-size: 18px;
+            color: #555;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Secret Button Game</h1>
+    <div>
+        <label for="numGood">Number of Good:</label>
+        <input type="number" id="numGood" value="5" min="1">
+    </div>
+    <div style="margin-top:10px;">
+        <label for="numBad">Number of Bad:</label>
+        <input type="number" id="numBad" value="1" min="1">
+    </div>
+    <button onclick="pressButton()">Click Me</button>
+
+    <div id="result"></div>
+    <div id="note"></div>
+
+    <script>
+        let badGiven = false; // Track if a hidden Bad has already been triggered
+
+        function pressButton() {
+            const numGood = parseInt(document.getElementById('numGood').value) || 5;
+            const numBad = parseInt(document.getElementById('numBad').value) || 1;
+
+            // Total visible Good = entered Good + hidden Bad count
+            const totalGood = numGood + numBad;
+
+            const randIndex = Math.floor(Math.random() * totalGood) + 1;
+            const resultDiv = document.getElementById('result');
+            const noteDiv = document.getElementById('note');
+
+            // Only trigger Bad once
+            if (randIndex > numGood && !badGiven) {
+                resultDiv.innerText = "Bad";
+                noteDiv.innerText = "(click again if you get Bad)";
+                badGiven = true;
+            } else {
+                resultDiv.innerText = "Good";
+                noteDiv.innerText = "";
+            }
+        }
+    </script>
+</body>
+</html>
