@@ -51,11 +51,6 @@
             opacity: 0.5;
             pointer-events: none;
         }
-        #stats {
-            margin-top: 20px;
-            font-size: 18px;
-            color: #444;
-        }
     </style>
 </head>
 <body>
@@ -75,19 +70,18 @@
 
     <div id="result"></div>
     <div id="note"></div>
-    <div id="stats"></div>
 
     <script>
-        let clickCount = 0;
         let gameStarted = false;
         let outcomePool = [];
+        let badGiven = false;
+        let forceGoodNextClick = false;
 
         function pressButton() {
             const numGood = parseInt(document.getElementById('numGood').value) || 5;
             const numBad = parseInt(document.getElementById('numBad').value) || 1;
             const resultDiv = document.getElementById('result');
             const noteDiv = document.getElementById('note');
-            const statsDiv = document.getElementById('stats');
             const playBtn = document.getElementById('playBtn');
 
             if (!gameStarted) {
@@ -95,9 +89,13 @@
                 document.getElementById('numGood').disabled = true;
                 document.getElementById('numBad').disabled = true;
 
-                // Build and shuffle the pool of outcomes once
-                outcomePool = Array(numGood).fill("Good").concat(Array(numBad).fill("Bad"));
-                outcomePool = outcomePool.sort(() => Math.random() - 0.5); // Shuffle randomly
+                // Create pool based on inputs
+                // If bad has not been given, add bad outcomes; otherwise, only good
+                outcomePool = Array(numGood).fill("Good");
+                if (!badGiven) {
+                    outcomePool = outcomePool.concat(Array(numBad).fill("Bad"));
+                }
+                outcomePool = outcomePool.sort(() => Math.random() - 0.5);
             }
 
             if (outcomePool.length === 0) {
@@ -109,55 +107,59 @@
                 return;
             }
 
-            clickCount++;
-
             // Start flip animation
             resultDiv.innerText = '';
             resultDiv.className = 'flip';
             playBtn.disabled = true;
             playBtn.classList.add('disabled');
 
-            // Pick next outcome from the pool
-            const result = outcomePool.pop();
-
             setTimeout(() => {
-                let className;
+                let result;
+
+                if (forceGoodNextClick) {
+                    // Guarantee Good outcome this click after Bad
+                    result = "Good";
+                    forceGoodNextClick = false;
+                } else {
+                    // Pop a random outcome from pool
+                    const randomIndex = Math.floor(Math.random() * outcomePool.length);
+                    result = outcomePool.splice(randomIndex, 1)[0];
+                }
 
                 if (result === "Bad") {
-                    className = "bad";
+                    badGiven = true;
+                    forceGoodNextClick = true;
                     resultDiv.innerText = "Bad";
-                    noteDiv.innerText = "(Game over!)";
+                    resultDiv.className = "bad";
+                    noteDiv.innerText = "(Click again if you get Bad)";
                 } else {
-                    className = "good";
                     resultDiv.innerText = "Good";
+                    resultDiv.className = "good";
                     noteDiv.innerText = "";
                 }
 
-                resultDiv.className = className;
-                statsDiv.innerText = `Clicks: ${clickCount}`;
-
-                // If pool is empty now, disable button
-                if (outcomePool.length === 0) {
+                // If no more outcomes, disable button
+                if (outcomePool.length === 0 && !forceGoodNextClick) {
                     playBtn.disabled = true;
                     playBtn.classList.add('disabled');
-                    noteDiv.innerText = "No more outcomes!";
+                    noteDiv.innerText += " No more outcomes!";
                 } else {
                     playBtn.disabled = false;
                     playBtn.classList.remove('disabled');
                 }
 
-            }, 1200); // match flip animation duration
+            }, 1200); // animation duration
         }
 
         function resetGame() {
-            clickCount = 0;
             gameStarted = false;
             outcomePool = [];
+            badGiven = false;
+            forceGoodNextClick = false;
 
             document.getElementById('result').innerText = '';
             document.getElementById('result').className = '';
             document.getElementById('note').innerText = '';
-            document.getElementById('stats').innerText = '';
 
             document.getElementById('numGood').disabled = false;
             document.getElementById('numBad').disabled = false;
