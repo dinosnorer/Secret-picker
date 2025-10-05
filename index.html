@@ -78,58 +78,55 @@
     <div id="stats"></div>
 
     <script>
-        let badGiven = false;
         let clickCount = 0;
         let gameStarted = false;
+        let outcomePool = [];
 
         function pressButton() {
-            if (!gameStarted) {
-                gameStarted = true;
-                document.getElementById('numGood').disabled = true;
-                document.getElementById('numBad').disabled = true;
-            }
-
-            clickCount++;
-
             const numGood = parseInt(document.getElementById('numGood').value) || 5;
             const numBad = parseInt(document.getElementById('numBad').value) || 1;
-
             const resultDiv = document.getElementById('result');
             const noteDiv = document.getElementById('note');
             const statsDiv = document.getElementById('stats');
             const playBtn = document.getElementById('playBtn');
 
-            // Build array of outcomes
-            const outcomes = Array(numGood).fill("Good");
+            if (!gameStarted) {
+                gameStarted = true;
+                document.getElementById('numGood').disabled = true;
+                document.getElementById('numBad').disabled = true;
 
-            // Only add Bad outcomes if not already triggered
-            if (!badGiven) {
-                for (let i = 0; i < numBad; i++) {
-                    outcomes.push("Bad");
-                }
+                // Build and shuffle the pool of outcomes once
+                outcomePool = Array(numGood).fill("Good").concat(Array(numBad).fill("Bad"));
+                outcomePool = outcomePool.sort(() => Math.random() - 0.5); // Shuffle randomly
             }
 
-            // Randomize and pick outcome
-            const randomIndex = Math.floor(Math.random() * outcomes.length);
-            const result = outcomes[randomIndex];
+            if (outcomePool.length === 0) {
+                resultDiv.innerText = "No more outcomes!";
+                resultDiv.className = "";
+                noteDiv.innerText = "Reset to play again.";
+                playBtn.disabled = true;
+                playBtn.classList.add('disabled');
+                return;
+            }
+
+            clickCount++;
 
             // Start flip animation
             resultDiv.innerText = '';
             resultDiv.className = 'flip';
-
-            // Disable play button during animation
             playBtn.disabled = true;
             playBtn.classList.add('disabled');
 
-            // After animation
+            // Pick next outcome from the pool
+            const result = outcomePool.pop();
+
             setTimeout(() => {
                 let className;
 
-                if (result === "Bad" && !badGiven) {
+                if (result === "Bad") {
                     className = "bad";
                     resultDiv.innerText = "Bad";
-                    noteDiv.innerText = "(click again if you get Bad)";
-                    badGiven = true;
+                    noteDiv.innerText = "(Game over!)";
                 } else {
                     className = "good";
                     resultDiv.innerText = "Good";
@@ -139,15 +136,23 @@
                 resultDiv.className = className;
                 statsDiv.innerText = `Clicks: ${clickCount}`;
 
-                playBtn.disabled = false;
-                playBtn.classList.remove('disabled');
+                // If pool is empty now, disable button
+                if (outcomePool.length === 0) {
+                    playBtn.disabled = true;
+                    playBtn.classList.add('disabled');
+                    noteDiv.innerText = "No more outcomes!";
+                } else {
+                    playBtn.disabled = false;
+                    playBtn.classList.remove('disabled');
+                }
+
             }, 1200); // match flip animation duration
         }
 
         function resetGame() {
-            badGiven = false;
             clickCount = 0;
             gameStarted = false;
+            outcomePool = [];
 
             document.getElementById('result').innerText = '';
             document.getElementById('result').className = '';
